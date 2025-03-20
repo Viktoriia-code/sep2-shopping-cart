@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS_ID = 'Docker_Hub'
+        DOCKERHUB_CREDENTIALS_ID = '904e1d13-ede4-4db2-b40e-7b7a37fb0f43'
         DOCKERHUB_REPO = 'vikikone/shopping-cart'
         DOCKER_IMAGE_TAG = 'latest_v1'
     }
@@ -45,7 +45,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'Docker_Hub', 
                                   usernameVariable: 'DOCKER_USER', 
                                   passwordVariable: 'DOCKER_PASS')]) {
-                        docker.withRegistry('https://index.docker.io/v1/', 'Docker_Hub') {
+                        docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
                             docker.image("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}").push()
                         }
                     }
