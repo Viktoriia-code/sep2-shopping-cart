@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    environment {
+        DOCKERHUB_CREDENTIALS_ID = 'Docker_Hub'
+        DOCKERHUB_REPO = 'vikikone/shopping-cart'
+        DOCKER_IMAGE_TAG = 'latest_v1'
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -22,6 +27,28 @@ pipeline {
                            classPattern: '**/target/classes',
                            sourcePattern: '**/src/main/java',
                            exclusionPattern: '**/test/**'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                // Build Docker image
+                script {
+                    docker.build("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}", ".")
+                }
+            }
+        }
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                // Push Docker image to Docker Hub
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'Docker_Hub', 
+                                  usernameVariable: 'DOCKER_USER', 
+                                  passwordVariable: 'DOCKER_PASS')]) {
+                        docker.withRegistry('https://index.docker.io/v1/', 'Docker_Hub') {
+                            docker.image("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}").push()
+                        }
+                    }
                 }
             }
         }
