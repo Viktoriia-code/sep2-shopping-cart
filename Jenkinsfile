@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS_ID = '904e1d13-ede4-4db2-b40e-7b7a37fb0f43'
+        DOCKERHUB_CREDENTIALS_ID = 'Docker_Hub'
         DOCKERHUB_REPO = 'vikikone/shopping-cart'
         DOCKER_IMAGE_TAG = 'latest_v1'
     }
@@ -30,28 +30,34 @@ pipeline {
                 }
             }
         }
+        stage('Docker Login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS_ID,
+                                                     usernameVariable: 'DOCKERHUB_USER',
+                                                     passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        bat """
+                            echo %DOCKERHUB_PASSWORD% | docker login -u %DOCKERHUB_USER% --password-stdin
+                        """
+                    }
+                }
+            }
+        }
         stage('Build Docker Image') {
             steps {
-                // Build Docker image
                 script {
-                    docker.build("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}", ".")
+                    bat """
+                        docker build -t %DOCKERHUB_REPO%:%DOCKER_IMAGE_TAG% .
+                    """
                 }
             }
         }
         stage('Push Docker Image to Docker Hub') {
             steps {
-                // Push Docker image to Docker Hub
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'Docker_Hub', 
-                                  usernameVariable: 'DOCKER_USER', 
-                                  passwordVariable: 'DOCKER_PASS')]) {
-                        docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
-                            bat """
-                                echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                                docker push %DOCKERHUB_REPO%:%DOCKER_IMAGE_TAG%
-                            """
-                        }
-                    }
+                    bat """
+                        docker push %DOCKERHUB_REPO%:%DOCKER_IMAGE_TAG%
+                    """
                 }
             }
         }
